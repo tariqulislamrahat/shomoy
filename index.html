@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIUB Social Welfare Club - Shomoy</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        body {
+            background: #1d1d1d;
+            color: #ffffff;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 24px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 40px 0;
+            margin-bottom: 56px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        
+        .logo h1 {
+            font-size: 19px;
+            font-weight: 600;
+            letter-spacing: -0.03em;
+            margin-bottom: 6px;
+        }
+        
+        .logo span {
+            font-size: 12px;
+            color: rgba(255,255,255,0.35);
+            font-weight: 400;
+            letter-spacing: 0.01em;
+        }
+        
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .storage-indicator {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 18px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 8px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        
+        .settings-icon {
+            display: none;
+            width: 44px;
+            height: 44px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .settings-icon:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.15);
+        }
+        
+        .upload-zone {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 500px;
+            padding: 80px;
+            background: rgba(255,255,255,0.02);
+            border: 1.5px dashed rgba(255,255,255,0.08);
+            border-radius: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 40px;
+        }
+        
+        .upload-zone:hover {
+            border-color: rgba(255,255,255,0.18);
+            background: rgba(255,255,255,0.04);
+            transform: translateY(-2px);
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 28px;
+            opacity: 0.3;
+        }
+        
+        .upload-zone h2 {
+            font-size: 19px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            letter-spacing: -0.03em;
+        }
+        
+        .upload-zone p {
+            color: rgba(255,255,255,0.35);
+            font-size: 13px;
+            margin-bottom: 6px;
+            line-height: 1.7;
+        }
+        
+        .filter-section {
+            background: rgba(255,255,255,0.02);
+            padding: 36px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.06);
+            margin-bottom: 40px;
+            display: none;
+        }
+        
+        .search-bar {
+            margin-bottom: 28px;
+        }
+        
+        .search-bar input {
+            width: 100%;
+            padding: 15px 22px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            color: white;
+            font-size: 13px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .search-bar input:focus {
+            outline: none;
+            border-color: rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.06);
+        }
+        
+        .search-bar input::placeholder {
+            color: rgba(255,255,255,0.25);
+        }
+        
+        .day-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+        }
+        
+        .day-button {
+            padding: 11px 22px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: -0.01em;
+        }
+        
+        .day-button:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.15);
+        }
+        
+        .day-button.active {
+            background: white;
+            color: #1d1d1d;
+            border-color: white;
+        }
+        
+        .time-slot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
+            gap: 10px;
+            margin-bottom: 28px;
+        }
+        
+        .time-slot-button {
+            padding: 13px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            text-align: center;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: -0.01em;
+        }
+        
+        .time-slot-button:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.15);
+        }
+        
+        .time-slot-button.selected {
+            background: white;
+            color: #1d1d1d;
+            border-color: white;
+        }
+        
+        .student-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 18px;
+            padding: 24px 0;
+        }
+        
+        .student-card {
+            background: rgba(255,255,255,0.02);
+            padding: 28px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.06);
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .student-card:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.15);
+            transform: translateY(-3px);
+        }
+        
+        .student-card h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 18px;
+            letter-spacing: -0.02em;
+        }
+        
+        .student-info {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            color: rgba(255,255,255,0.45);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        
+        .availability-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 7px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-top: 18px;
+            letter-spacing: 0.01em;
+        }
+        
+        .availability-indicator.free {
+            background: rgba(16, 185, 129, 0.12);
+            color: #10b981;
+        }
+        
+        .availability-indicator.busy {
+            background: rgba(239, 68, 68, 0.12);
+            color: #ef4444;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal {
+            background: #1d1d1d;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 36px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        
+        .modal-header h2 {
+            font-size: 19px;
+            font-weight: 600;
+            letter-spacing: -0.03em;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.4);
+            font-size: 28px;
+            cursor: pointer;
+            padding: 8px;
+            transition: color 0.2s;
+            line-height: 1;
+        }
+        
+        .modal-close:hover {
+            color: white;
+        }
+        
+        .modal-body {
+            padding: 36px;
+        }
+        
+        .student-details {
+            margin-bottom: 44px;
+        }
+        
+        .detail-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.45);
+            line-height: 1.6;
+        }
+        
+        .detail-row strong {
+            color: white;
+            font-weight: 500;
+            min-width: 100px;
+        }
+        
+        .weekly-schedule h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 28px;
+            letter-spacing: -0.02em;
+        }
+        
+        .day-schedule {
+            margin-bottom: 28px;
+        }
+        
+        .day-schedule h4 {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 14px;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        
+        .schedule-slots {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(75px, 1fr));
+            gap: 10px;
+        }
+        
+        .schedule-slot {
+            padding: 11px;
+            border-radius: 7px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 500;
+            border: 1px solid transparent;
+            letter-spacing: 0.01em;
+        }
+        
+        .schedule-slot.free {
+            background: rgba(16, 185, 129, 0.12);
+            color: #10b981;
+            border-color: rgba(16, 185, 129, 0.18);
+        }
+        
+        .schedule-slot.busy {
+            background: rgba(239, 68, 68, 0.12);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.18);
+        }
+        
+        .loader {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.4);
+        }
+        
+        .empty-state {
+            display: none;
+            text-align: center;
+            padding: 100px 20px;
+            color: rgba(255,255,255,0.35);
+        }
+        
+        .empty-state h3 {
+            font-size: 17px;
+            margin-bottom: 10px;
+            color: rgba(255,255,255,0.6);
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+        
+        .settings-modal .modal {
+            max-width: 600px;
+        }
+        
+        .data-management {
+            padding: 0;
+        }
+        
+        .data-stats {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        
+        .stat-item {
+            background: rgba(255,255,255,0.03);
+            padding: 18px 20px;
+            border-radius: 10px;
+            font-size: 13px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        
+        .stat-item strong {
+            color: white;
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+        }
+        
+        .stat-item span {
+            color: rgba(255,255,255,0.45);
+        }
+        
+        .data-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .data-button {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 13px;
+            letter-spacing: -0.01em;
+        }
+        
+        .replace-button {
+            background: white;
+            color: #1d1d1d;
+        }
+        
+        .clear-button {
+            background: rgba(255,255,255,0.04);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        
+        .replace-button:hover {
+            background: rgba(255,255,255,0.92);
+            transform: translateY(-1px);
+        }
+        
+        .clear-button:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .data-support-info {
+            margin-top: 40px;
+            margin-bottom: 8px;
+            text-align: center;
+            background: rgba(255,255,255,0.03);
+            padding: 16px 14px;
+            border-radius: 10px;
+            font-size: 12px;
+            border: 1px solid rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.5);
+            line-height: 1.8;
+        }
+        
+        .data-support-info a {
+            color: #38bdf8;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .data-support-info a:hover {
+            color: #14b8a6;
+            text-decoration: underline;
+        }
+        
+        .results-header {
+            margin-bottom: 20px;
+        }
+        
+        .results-header h2 {
+            font-size: 17px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.75);
+            letter-spacing: -0.02em;
+        }
+        
+        @media (max-width: 767px) {
+            body {
+                padding: 16px;
+            }
+            
+            header {
+                padding: 28px 0;
+                margin-bottom: 40px;
+            }
+            
+            .upload-zone {
+                padding: 60px 40px;
+                min-height: 400px;
+            }
+            
+            .filter-section {
+                padding: 28px;
+            }
+            
+            .student-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .time-slot-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .modal-header, .modal-body {
+                padding: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <h1>AIUB Social Welfare Club - SHOMOY</h1>
+                <span>Student Availability Tracker</span>
+            </div>
+            <div class="header-actions">
+                <div class="storage-indicator" id="storageIndicator">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="2" width="12" height="12" rx="2"/>
+                        <path d="M2 6h12M6 2v12"/>
+                    </svg>
+                    <span>Data loaded</span>
+                </div>
+                <div class="settings-icon" id="settingsIcon">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="10" cy="10" r="3"/>
+                        <path d="M10 1v2m0 14v2M19 10h-2M3 10H1m15.66-5.66l-1.42 1.42M5.76 14.24l-1.42 1.42m12.32 0l-1.42-1.42M5.76 5.76L4.34 4.34"/>
+                    </svg>
+                </div>
+            </div>
+        </header>
+        
+        <div class="upload-zone" id="uploadZone">
+            <div class="upload-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+            </div>
+            <h2>Upload Excel File</h2>
+            <p>Drag & drop your Google Forms response file here or click to browse</p>
+            <p>Supported: .xlsx, .xls</p>
+            <p style="font-size: 12px; color: rgba(255,255,255,0.3); margin-top: 12px;">
+                <strong>Required columns:</strong> Name, Student ID, Phone Number, Department, Sunday, Monday, Tuesday, Wednesday, Thursday
+            </p>
+            <input type="file" id="fileInput" accept=".xlsx, .xls" style="display: none;">
+        </div>
+        
+        <div class="loader" id="loader">
+            Processing file... Please wait
+        </div>
+        
+        <div class="filter-section" id="filterSection">
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search by Name, ID, or Dept...">
+            </div>
+            
+            <div class="day-selector" id="daySelector">
+                <div class="day-button" data-day="sunday">Sunday</div>
+                <div class="day-button active" data-day="monday">Monday</div>
+                <div class="day-button" data-day="tuesday">Tuesday</div>
+                <div class="day-button" data-day="wednesday">Wednesday</div>
+                <div class="day-button" data-day="thursday">Thursday</div>
+            </div>
+            
+            <div class="time-slot-grid" id="timeSlotGrid">
+                <div class="time-slot-button" data-slot="8:00">8:00 AM</div>
+                <div class="time-slot-button" data-slot="9:00">9:00 AM</div>
+                <div class="time-slot-button" data-slot="10:00">10:00 AM</div>
+                <div class="time-slot-button" data-slot="11:00">11:00 AM</div>
+                <div class="time-slot-button" data-slot="12:00">12:00 PM</div>
+                <div class="time-slot-button" data-slot="1:00">1:00 PM</div>
+                <div class="time-slot-button" data-slot="2:00">2:00 PM</div>
+                <div class="time-slot-button" data-slot="3:00">3:00 PM</div>
+                <div class="time-slot-button" data-slot="4:00">4:00 PM</div>
+            </div>
+        </div>
+        
+        <div class="results-section" id="resultsSection" style="display: none;">
+            <div class="results-header">
+                <h2 id="resultsCount">0 Students Available</h2>
+            </div>
+            <div class="empty-state" id="emptyState">
+                <h3>No students found</h3>
+                <p>Try adjusting your filters or search criteria</p>
+            </div>
+            <div class="student-grid" id="studentGrid"></div>
+        </div>
+        
+        <div class="modal-overlay" id="modalOverlay">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2 id="modalStudentName">Student Details</h2>
+                    <button class="modal-close" onclick="closeModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="student-details">
+                        <div class="detail-row">
+                            <strong>Student ID:</strong>
+                            <span id="modalStudentId"></span>
+                        </div>
+                        <div class="detail-row">
+                            <strong>Dept:</strong>
+                            <span id="modalStudentSection"></span>
+                        </div>
+                        <div class="detail-row">
+                            <strong>Phone:</strong>
+                            <span id="modalStudentPhone"></span>
+                        </div>
+                        <div class="detail-row">
+                            <strong>Email:</strong>
+                            <span id="modalStudentEmail"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="weekly-schedule">
+                        <h3>Weekly Availability</h3>
+                        <div class="day-schedule">
+                            <h4>Sunday</h4>
+                            <div class="schedule-slots" id="sundaySlots"></div>
+                        </div>
+                        <div class="day-schedule">
+                            <h4>Monday</h4>
+                            <div class="schedule-slots" id="mondaySlots"></div>
+                        </div>
+                        <div class="day-schedule">
+                            <h4>Tuesday</h4>
+                            <div class="schedule-slots" id="tuesdaySlots"></div>
+                        </div>
+                        <div class="day-schedule">
+                            <h4>Wednesday</h4>
+                            <div class="schedule-slots" id="wednesdaySlots"></div>
+                        </div>
+                        <div class="day-schedule">
+                            <h4>Thursday</h4>
+                            <div class="schedule-slots" id="thursdaySlots"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal-overlay settings-modal" id="settingsModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2>Data Management</h2>
+                    <button class="modal-close" onclick="closeSettings()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="data-management">
+                        <div class="data-stats">
+                            <div class="stat-item">
+                                <strong>Students Loaded</strong>
+                                <span id="studentCount">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <strong>Upload Date</strong>
+                                <span id="uploadDate">-</span>
+                            </div>
+                            <div class="stat-item">
+                                <strong>Storage Used</strong>
+                                <span id="storageSize">0 KB</span>
+                            </div>
+                        </div>
+                        <div class="data-actions">
+                            <button class="data-button replace-button" id="replaceData">Replace Data</button>
+                            <button class="data-button clear-button" id="clearData">Clear All Data</button>
+                        </div>
+                        <div class="data-support-info">
+                            <span>Facing problems or an error? <br>Reach out to <a href="https://www.facebook.com/tariqulislaamrahat/" target="_blank" rel="noopener">support</a> for assistance.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const TIME_SLOTS = ['8:00', '9:00', '10:00', '11:00', '12:00', '1:00', '2:00', '3:00', '4:00'];
+        const TIME_LABELS = ['8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM'];
+        const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday'];
+        
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const loader = document.getElementById('loader');
+        const filterSection = document.getElementById('filterSection');
+        const resultsSection = document.getElementById('resultsSection');
+        const studentGrid = document.getElementById('studentGrid');
+        const searchInput = document.getElementById('searchInput');
+        const resultsCount = document.getElementById('resultsCount');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const emptyState = document.getElementById('emptyState');
+        const storageIndicator = document.getElementById('storageIndicator');
+        const settingsIcon = document.getElementById('settingsIcon');
+        const settingsModal = document.getElementById('settingsModal');
+        const studentCountEl = document.getElementById('studentCount');
+        const uploadDateEl = document.getElementById('uploadDate');
+        const storageSizeEl = document.getElementById('storageSize');
+        const replaceDataBtn = document.getElementById('replaceData');
+        const clearDataBtn = document.getElementById('clearData');
+        
+        let students = [];
+        let selectedDay = 'monday';
+        let selectedSlots = [];
+        let searchQuery = '';
+        
+        function closeModal() {
+            modalOverlay.style.display = 'none';
+        }
+        
+        function closeSettings() {
+            settingsModal.style.display = 'none';
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const storedData = localStorage.getItem('student_availability_data');
+            if (storedData) {
+                try {
+                    const data = JSON.parse(storedData);
+                    students = data.students;
+                    displayStorageInfo();
+                    showMainInterface();
+                } catch (e) {
+                    console.error('Error loading stored data:', e);
+                }
+            }
+            setupEventListeners();
+        });
+        
+        function setupEventListeners() {
+            uploadZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) processFile(e.target.files[0]);
+            });
+            
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.style.borderColor = 'rgba(255,255,255,0.3)';
+            });
+            
+            uploadZone.addEventListener('dragleave', () => {
+                uploadZone.style.borderColor = 'rgba(255,255,255,0.08)';
+            });
+            
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.style.borderColor = 'rgba(255,255,255,0.08)';
+                if (e.dataTransfer.files.length > 0) processFile(e.dataTransfer.files[0]);
+            });
+            
+            document.querySelectorAll('.day-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    document.querySelectorAll('.day-button').forEach(b => b.classList.remove('active'));
+                    button.classList.add('active');
+                    selectedDay = button.getAttribute('data-day');
+                    applyFilters();
+                });
+            });
+            
+            document.querySelectorAll('.time-slot-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const slot = button.getAttribute('data-slot');
+                    const index = selectedSlots.indexOf(slot);
+                    
+                    if (index === -1) {
+                        selectedSlots.push(slot);
+                        button.classList.add('selected');
+                    } else {
+                        selectedSlots.splice(index, 1);
+                        button.classList.remove('selected');
+                    }
+                    applyFilters();
+                });
+            });
+            
+            searchInput.addEventListener('input', (e) => {
+                searchQuery = e.target.value.trim();
+                applyFilters();
+            });
+            
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) closeModal();
+            });
+            
+            settingsModal.addEventListener('click', (e) => {
+                if (e.target === settingsModal) closeSettings();
+            });
+            
+            settingsIcon.addEventListener('click', () => {
+                settingsModal.style.display = 'flex';
+            });
+            
+            replaceDataBtn.addEventListener('click', () => {
+                closeSettings();
+                fileInput.click();
+            });
+            
+            clearDataBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to delete all data? This action cannot be undone.')) {
+                    localStorage.removeItem('student_availability_data');
+                    students = [];
+                    closeSettings();
+                    showUploadInterface();
+                }
+            });
+        }
+        
+        function processFile(file) {
+            const validTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 
+                               'application/vnd.ms-excel'];
+            
+            if (!validTypes.includes(file.type)) {
+                alert('Please upload a valid Excel file (.xlsx or .xls)');
+                return;
+            }
+            
+            loader.style.display = 'flex';
+            uploadZone.style.display = 'none';
+            
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    const processedStudents = [];
+                    
+                    for (let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        
+                        if (!row || row.length === 0 || !row[1]) continue;
+                        
+                        let phone = String(row[2] || '');
+                        if (phone.length === 10 && !isNaN(phone)) {
+                            phone = '0' + phone;
+                        }
+                        
+                        const student = {
+                            id: String(row[1] || `student_${i}`),
+                            name: String(row[0] || ''),
+                            studentId: String(row[1] || ''),
+                            email: '',
+                            phone: phone,
+                            section: String(row[3] || ''),
+                            schedule: {
+                                sunday: parseDaySchedule(row[4] || ''),
+                                monday: parseDaySchedule(row[5] || ''),
+                                tuesday: parseDaySchedule(row[6] || ''),
+                                wednesday: parseDaySchedule(row[7] || ''),
+                                thursday: parseDaySchedule(row[8] || '')
+                            }
+                        };
+                        
+                        if (student.name && student.name.trim() !== '') {
+                            processedStudents.push(student);
+                        }
+                    }
+                    
+                    if (processedStudents.length === 0) {
+                        alert('No valid student data found in the file. Please check the format.');
+                        loader.style.display = 'none';
+                        uploadZone.style.display = 'flex';
+                        return;
+                    }
+                    
+                    const storageData = {
+                        uploadDate: new Date().toISOString(),
+                        studentCount: processedStudents.length,
+                        students: processedStudents,
+                        version: '1.0'
+                    };
+                    
+                    localStorage.setItem('student_availability_data', JSON.stringify(storageData));
+                    students = processedStudents;
+                    displayStorageInfo();
+                    showMainInterface();
+                    
+                } catch (error) {
+                    console.error('Error processing file:', error);
+                    alert('Error processing file: ' + error.message);
+                    loader.style.display = 'none';
+                    uploadZone.style.display = 'flex';
+                }
+            };
+            
+            reader.onerror = () => {
+                alert('Error reading file. Please try again.');
+                loader.style.display = 'none';
+                uploadZone.style.display = 'flex';
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function parseDaySchedule(dayString) {
+            const slots = {};
+            TIME_SLOTS.forEach(slot => {
+                slots[slot] = { status: 'free' };
+            });
+            
+            if (!dayString || dayString.trim() === '' || dayString.toLowerCase().includes('free') || dayString.toLowerCase().includes('no classes')) {
+                return slots;
+            }
+            
+            const classes = dayString.split(',').map(c => c.trim()).filter(c => c);
+            
+            for (const classTime of classes) {
+                const timeMatch = classTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)\s*[-–]\s*(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+                
+                if (timeMatch) {
+                    const startHour = parseTimeToHour(timeMatch[1], timeMatch[2], timeMatch[3]);
+                    const endHour = parseTimeToHour(timeMatch[4], timeMatch[5], timeMatch[6]);
+                    
+                    if (startHour > 0 && endHour > 0 && startHour < endHour) {
+                        markBusySlots(slots, startHour, endHour);
+                    }
+                }
+            }
+            
+            return slots;
+        }
+        
+        function parseTimeToHour(hourStr, minuteStr, period) {
+            let hours = parseInt(hourStr);
+            const minutes = parseInt(minuteStr);
+            const ampm = period.toUpperCase();
+            
+            if (ampm === 'PM' && hours !== 12) {
+                hours += 12;
+            } else if (ampm === 'AM' && hours === 12) {
+                hours = 0;
+            }
+            
+            return hours + (minutes / 60);
+        }
+        
+        function markBusySlots(slots, startHour, endHour) {
+            const slotMapping = [
+                { key: '8:00', start: 8, end: 9 },
+                { key: '9:00', start: 9, end: 10 },
+                { key: '10:00', start: 10, end: 11 },
+                { key: '11:00', start: 11, end: 12 },
+                { key: '12:00', start: 12, end: 13 },
+                { key: '1:00', start: 13, end: 14 },
+                { key: '2:00', start: 14, end: 15 },
+                { key: '3:00', start: 15, end: 16 },
+                { key: '4:00', start: 16, end: 17 }
+            ];
+            
+            for (const slot of slotMapping) {
+                if (startHour < slot.end && endHour > slot.start) {
+                    slots[slot.key] = { status: 'busy' };
+                }
+            }
+        }
+        
+        function applyFilters() {
+            let filtered = [...students];
+            
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                filtered = filtered.filter(s => 
+                    (s.name && s.name.toLowerCase().includes(query)) ||
+                    (s.studentId && s.studentId.toLowerCase().includes(query)) ||
+                    (s.section && s.section.toLowerCase().includes(query))
+                );
+            }
+            
+            if (selectedSlots.length > 0) {
+                filtered = filtered.filter(student => {
+                    return selectedSlots.every(slot => {
+                        return student.schedule[selectedDay] && 
+                               student.schedule[selectedDay][slot] && 
+                               student.schedule[selectedDay][slot].status === 'free';
+                    });
+                });
+            }
+            
+            resultsCount.textContent = `${filtered.length} Student${filtered.length !== 1 ? 's' : ''} Available`;
+            
+            if (filtered.length === 0) {
+                studentGrid.innerHTML = '';
+                emptyState.style.display = 'block';
+            } else {
+                emptyState.style.display = 'none';
+                renderStudentGrid(filtered);
+            }
+            
+            resultsSection.style.display = 'block';
+        }
+        
+        function renderStudentGrid(studentsToRender) {
+            studentGrid.innerHTML = '';
+            
+            studentsToRender.forEach(student => {
+                const daySchedule = student.schedule[selectedDay];
+                const freeSlots = TIME_SLOTS.filter(slot => daySchedule[slot].status === 'free');
+                
+                const card = document.createElement('div');
+                card.className = 'student-card';
+                
+                let availabilityHTML = '';
+                if (freeSlots.length === TIME_SLOTS.length) {
+                    availabilityHTML = '<div class="availability-indicator free">✓ Free all day</div>';
+                } else if (freeSlots.length === 0) {
+                    availabilityHTML = '<div class="availability-indicator busy">✕ Busy all day</div>';
+                } else {
+                    availabilityHTML = `<div class="availability-indicator free">✓ ${freeSlots.length} slot${freeSlots.length !== 1 ? 's' : ''} free</div>`;
+                }
+                
+                card.innerHTML = `
+                    <h3>${student.name}</h3>
+                    <div class="student-info">
+                        <div>ID: ${student.studentId}</div>
+                        <div>Dept: ${student.section}</div>
+                        <div>Phone: ${student.phone}</div>
+                    </div>
+                    ${availabilityHTML}
+                `;
+                
+                card.addEventListener('click', () => openStudentModal(student));
+                studentGrid.appendChild(card);
+            });
+        }
+        
+        function openStudentModal(student) {
+            document.getElementById('modalStudentName').textContent = student.name;
+            document.getElementById('modalStudentId').textContent = student.studentId;
+            document.getElementById('modalStudentSection').textContent = student.section;
+            document.getElementById('modalStudentPhone').textContent = student.phone;
+            document.getElementById('modalStudentEmail').textContent = student.email || 'N/A';
+            
+            DAYS.forEach(day => {
+                renderDaySchedule(day, student.schedule[day]);
+            });
+            
+            modalOverlay.style.display = 'flex';
+        }
+        
+        function renderDaySchedule(day, schedule) {
+            const container = document.getElementById(`${day}Slots`);
+            container.innerHTML = '';
+            
+            TIME_SLOTS.forEach((slot, index) => {
+                const slotEl = document.createElement('div');
+                slotEl.className = `schedule-slot ${schedule[slot].status}`;
+                slotEl.textContent = TIME_LABELS[index];
+                container.appendChild(slotEl);
+            });
+        }
+        
+        function displayStorageInfo() {
+            const storedData = JSON.parse(localStorage.getItem('student_availability_data'));
+            if (!storedData) return;
+            
+            storageIndicator.style.display = 'flex';
+            settingsIcon.style.display = 'flex';
+            studentCountEl.textContent = storedData.studentCount;
+            
+            const uploadDate = new Date(storedData.uploadDate);
+            uploadDateEl.textContent = uploadDate.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            const dataSize = new Blob([JSON.stringify(storedData)]).size;
+            storageSizeEl.textContent = `${(dataSize / 1024).toFixed(2)} KB`;
+        }
+        
+        function showMainInterface() {
+            loader.style.display = 'none';
+            uploadZone.style.display = 'none';
+            filterSection.style.display = 'block';
+            resultsSection.style.display = 'block';
+            applyFilters();
+        }
+        
+        function showUploadInterface() {
+            loader.style.display = 'none';
+            uploadZone.style.display = 'flex';
+            filterSection.style.display = 'none';
+            resultsSection.style.display = 'none';
+            storageIndicator.style.display = 'none';
+            settingsIcon.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
