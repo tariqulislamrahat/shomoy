@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AIUB Social Welfare Club - Shomoy</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -87,7 +87,7 @@
         }
 
         .upload-zone {
-            display: flex;
+            display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
@@ -814,7 +814,6 @@
             <p style="font-size: 12px; color: rgba(255,255,255,0.3); margin-top: 12px;">
                 <strong>Required columns:</strong> Name, Student ID, Phone Number, Department, Sunday, Monday, Tuesday, Wednesday, Thursday
             </p>
-            <input type="file" id="fileInput" accept=".xlsx, .xls" style="display: none;">
         </div>
         
         <div class="loader" id="loader">
@@ -934,7 +933,7 @@
                             </div>
                         </div>
                         <div class="data-actions">
-                            <button class="data-button replace-button" id="replaceData">Replace Data</button>
+                            <button class="data-button replace-button" id="replaceData">Refresh Data</button>
                             <button class="data-button clear-button" id="clearData">Clear All Data</button>
                         </div>
                         <div class="data-support-info">
@@ -952,7 +951,6 @@
         const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday'];
         
         const uploadZone = document.getElementById('uploadZone');
-        const fileInput = document.getElementById('fileInput');
         const loader = document.getElementById('loader');
         const filterSection = document.getElementById('filterSection');
         const resultsSection = document.getElementById('resultsSection');
@@ -993,32 +991,15 @@
                     showMainInterface();
                 } catch (e) {
                     console.error('Error loading stored data:', e);
+                    fetchDataFromSheets();
                 }
+            } else {
+                fetchDataFromSheets();
             }
             setupEventListeners();
         });
         
         function setupEventListeners() {
-            uploadZone.addEventListener('click', () => fileInput.click());
-            fileInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) processFile(e.target.files[0]);
-            });
-            
-            uploadZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadZone.style.borderColor = 'rgba(255,255,255,0.3)';
-            });
-            
-            uploadZone.addEventListener('dragleave', () => {
-                uploadZone.style.borderColor = 'rgba(255,255,255,0.08)';
-            });
-            
-            uploadZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadZone.style.borderColor = 'rgba(255,255,255,0.08)';
-                if (e.dataTransfer.files.length > 0) processFile(e.dataTransfer.files[0]);
-            });
-            
             document.querySelectorAll('.day-button').forEach(button => {
                 button.addEventListener('click', () => {
                     document.querySelectorAll('.day-button').forEach(b => b.classList.remove('active'));
@@ -1063,7 +1044,7 @@
             
             replaceDataBtn.addEventListener('click', () => {
                 closeSettings();
-                fileInput.click();
+                fetchDataFromSheets();
             });
             
             clearDataBtn.addEventListener('click', () => {
@@ -1076,54 +1057,39 @@
             });
         }
         
-        function processFile(file) {
-            const validTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 
-                               'application/vnd.ms-excel'];
-            
-            if (!validTypes.includes(file.type)) {
-                alert('Please upload a valid Excel file (.xlsx or .xls)');
-                return;
-            }
-            
+        function fetchDataFromSheets() {
             loader.style.display = 'flex';
-            uploadZone.style.display = 'none';
-            
-            const reader = new FileReader();
-            
-            reader.onload = (e) => {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const sheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[sheetName];
-                    
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vS6o4TCiRGrKLtyLVa_h2Sn8nzi3qIJbukGGpd-MH2eW1vMA63CCJIBPA_7DmOBhzNPfToguLSTZO3J/pub?output=csv')
+                .then(res => res.text())
+                .then(csv => {
+                    const parsed = Papa.parse(csv, { header: false });
+                    const jsonData = parsed.data;
                     
                     const processedStudents = [];
                     
                     for (let i = 1; i < jsonData.length; i++) {
                         const row = jsonData[i];
                         
-                        if (!row || row.length === 0 || !row[1]) continue;
+                        if (!row || row.length === 0 || !row[2]) continue;
                         
-                        let phone = String(row[2] || '');
+                        let phone = String(row[3] || '');
                         if (phone.length === 10 && !isNaN(phone)) {
                             phone = '0' + phone;
                         }
                         
                         const student = {
-                            id: String(row[1] || `student_${i}`),
-                            name: String(row[0] || ''),
-                            studentId: String(row[1] || ''),
+                            id: String(row[2] || `student_${i}`),
+                            name: String(row[1] || ''),
+                            studentId: String(row[2] || ''),
                             email: '',
                             phone: phone,
-                            section: String(row[3] || ''),
+                            section: String(row[4] || ''),
                             schedule: {
-                                sunday: parseDaySchedule(row[4] || ''),
-                                monday: parseDaySchedule(row[5] || ''),
-                                tuesday: parseDaySchedule(row[6] || ''),
-                                wednesday: parseDaySchedule(row[7] || ''),
-                                thursday: parseDaySchedule(row[8] || '')
+                                sunday: parseDaySchedule(row[5] || ''),
+                                monday: parseDaySchedule(row[7] || ''),
+                                tuesday: parseDaySchedule(row[8] || ''),
+                                wednesday: parseDaySchedule(row[9] || ''),
+                                thursday: parseDaySchedule(row[10] || '')
                             }
                         };
                         
@@ -1133,9 +1099,8 @@
                     }
                     
                     if (processedStudents.length === 0) {
-                        alert('No valid student data found in the file. Please check the format.');
+                        alert('No valid student data found. Please check the sheet.');
                         loader.style.display = 'none';
-                        uploadZone.style.display = 'flex';
                         return;
                     }
                     
@@ -1150,22 +1115,21 @@
                     students = processedStudents;
                     displayStorageInfo();
                     showMainInterface();
-                    
-                } catch (error) {
-                    console.error('Error processing file:', error);
-                    alert('Error processing file: ' + error.message);
                     loader.style.display = 'none';
-                    uploadZone.style.display = 'flex';
-                }
-            };
-            
-            reader.onerror = () => {
-                alert('Error reading file. Please try again.');
-                loader.style.display = 'none';
-                uploadZone.style.display = 'flex';
-            };
-            
-            reader.readAsArrayBuffer(file);
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    loader.style.display = 'none';
+                    const storedData = localStorage.getItem('student_availability_data');
+                    if (storedData) {
+                        const data = JSON.parse(storedData);
+                        students = data.students;
+                        displayStorageInfo();
+                        showMainInterface();
+                    } else {
+                        alert('Error fetching data and no cached data available.');
+                    }
+                });
         }
         
         function parseDaySchedule(dayString) {
