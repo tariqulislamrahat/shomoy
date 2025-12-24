@@ -2,13 +2,13 @@
 
 **Student Availability Tracker**
 
-SHOMOY is a fully client-side web application built for the AIUB Social Welfare Club to quickly find available volunteers based on their class schedules. It processes Excel files exported from Google Forms responses, parses class timings, and lets coordinators filter students by day and required free time slots.
+SHOMOY is a fully client-side web application built for the AIUB Social Welfare Club to quickly find available volunteers based on their class schedules. It fetches data from a published Google Sheet (from Google Forms responses), parses class timings, and lets coordinators filter students by day and required free time slots.
 
 Try it out [here](https://tariqulislamrahat.github.io/shomoy/)
 
 ## Overview
 
-The app runs entirely in the browser – no server, no backend, no data transmission. After uploading an Excel file containing student schedules, the data is stored locally in the browser's `localStorage`. Coordinators can then:
+The app runs entirely in the browser – no server, no backend, no data transmission beyond fetching the public sheet. On load, it fetches the latest data from the published Google Sheet and stores it locally in the browser's `localStorage` for offline use. Coordinators can then:
 
 - Select a day (Sunday to Thursday)
 - Choose one or more hourly time slots
@@ -17,36 +17,39 @@ The app runs entirely in the browser – no server, no backend, no data transmis
 
 ## Features
 
-- Upload and parse `.xlsx` files from Google Forms
+- Fetch and parse data from published Google Sheets (CSV format)
 - Filter by day, multiple time slots, and search query
 - Visual availability indicators (free all day, partially free, busy all day)
 - Detailed student modal with full weekly schedule grid
-- Local data persistence across sessions
-- Replace or clear data via settings
+- Local data caching across sessions
+- Refresh or clear data via settings
 - Fully responsive (desktop and mobile)
-- Minimal dependencies (only SheetJS from CDN)
+- Minimal dependencies (SheetJS and PapaParse from CDN)
 
 ## How It Works
 
 1. Club members submit their class schedules (busy times) via a Google Form.
-2. Responses are exported as an Excel file.
-3. The coordinator uploads the file to SHOMOY.
-4. The app converts class time ranges into busy hourly slots.
-5. Filtering shows only students who are free during all selected slots on the chosen day.
+2. Responses are collected in a Google Sheet.
+3. The sheet is published to the web as CSV (File > Share > Publish to web > Choose sheet > CSV).
+4. The app fetches the CSV data automatically on load.
+5. It converts class time ranges into busy hourly slots, skipping irrelevant columns like Timestamp and screenshot uploads.
+6. Filtering shows only students who are free during all selected slots on the chosen day.
 
-## Required Excel Format
+## Required Google Sheet Format
 
-The Excel file must have columns in this exact order:
+The Google Sheet must have columns in this exact order (from Google Forms):
 
-1. Name
-2. Student ID
-3. Phone Number
-4. Department
-5. Sunday
-6. Monday
-7. Tuesday
-8. Wednesday
-9. Thursday
+1. Timestamp (ignored)
+2. Your Name
+3. Student ID
+4. Phone Number
+5. Department
+6. Sunday
+7. Upload a screenshot from your portal (ignored)
+8. Monday
+9. Tuesday
+10. Wednesday
+11. Thursday
 
 Each day column should contain class times (when the student is busy), for example:
 
@@ -65,6 +68,12 @@ Supported time formats:
 - Dashes: `-` or `–` (en-dash)
 
 Phone numbers: 11-digit Bangladeshi numbers. The app automatically adds a leading `0` if the number has 10 digits.
+
+The publish URL is hardcoded in the app's script. To change it, update the `fetch` URL in `fetchDataFromSheets()`:
+
+```javascript
+fetch('https://docs.google.com/spreadsheets/d/e/example/pub?output=csv')
+```
 
 ## Current Time Slots
 
@@ -137,16 +146,16 @@ const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
 <button class="day-button" data-day="friday">Friday</button>
 ```
 
-3. Ensure your Excel file has a "Friday" column (in position J, column 10).
-4. Update the parsing loop in `processFile()` to include the new column index:
+3. Ensure your Google Sheet has a "Friday" column (after Thursday).
+4. Update the parsing loop in `fetchDataFromSheets()` to include the new column index:
 
 ```javascript
 schedule: {
-    sunday: parseDaySchedule(row[4] || ''),
-    monday: parseDaySchedule(row[5] || ''),
+    sunday: parseDaySchedule(row[5] || ''),
+    monday: parseDaySchedule(row[7] || ''),
     // ... existing
-    thursday: parseDaySchedule(row[8] || ''),
-    friday: parseDaySchedule(row[9] || '')  // new
+    thursday: parseDaySchedule(row[10] || ''),
+    friday: parseDaySchedule(row[11] || '')  // new; adjust index as needed
 }
 ```
 
@@ -164,26 +173,30 @@ And update the `openStudentModal()` loop to include `'friday'`.
 ## Usage Instructions
 
 1. Open the live demo or your local copy of `index.html`
-2. Drag and drop or select your Excel file
+2. The app automatically fetches and loads the latest data from the published Google Sheet
 3. Select a day
 4. (Optional) Click time slot buttons to require availability during those hours
 5. (Optional) Use search bar to filter by name/ID/department
 6. Click any student card for full details
-7. Use the settings gear (top right) to replace or clear data
+7. Use the settings gear (top right) to refresh (re-fetch) or clear data
 
 ## Data Privacy
 
+- Data is fetched from a public published Google Sheet
 - All processing happens in your browser
-- No data is uploaded or shared
-- Data stored only in `localStorage` on your device
+- Fetched data is cached in `localStorage` on your device
+- No additional data is uploaded or shared
 - Clear data via settings when using shared computers
+- Note: The sheet must be publicly published for the app to access it
 
 ## Limitations
 
+- Relies on the Google Sheet being publicly published and the URL remaining valid
 - Only supports days defined in `DAYS` array (currently Sunday–Thursday)
 - Fixed time slots (customizable with code changes)
 - No automatic merging of duplicate student entries
 - No export functionality
+- Potential delays if the sheet is large or network is slow
 
 ## Deployment
 
