@@ -803,7 +803,7 @@
     <div id="loginContainer" class="login-container">
         <div class="login-card">
             <div class="logo-container">
-                <img src="l.png" alt="Club Logo">
+                <img src="l.png" alt="Shomoy Club Logo">
             </div>
             <p class="login-subtitle">Sign in to access the volunteer dashboard</p>
             <form id="loginForm">
@@ -1076,7 +1076,7 @@
             if (selectedDay && start && end) {
                 printHeader += `<p><strong>Day:</strong> ${esc(selectedDay)}</p>
                     <p><strong>Time Slot:</strong> ${formatToAMPM(start)} – ${formatToAMPM(end)}</p>`;
-                title = `Available Volunteers for ${esc(selectedDay)}, ${formatToAMPM(start)} – ${formatToAMPM(end)}`;
+                title = `Available Volunteers: `;
                 content = `<table class="compact-table"><thead><tr><th>Name</th><th>ID</th><th>Phone</th></tr></thead><tbody>${filtered.map(v =>
                     `<tr onclick="showProfile('${esc(v.studentId)}')"><td>${esc(v.name)}</td><td>${esc(v.studentId)}</td><td><a href="tel:${v.phone.replace(/\D/g,'')}" class="volunteer-phone">${fmtPhone(v.phone)}</a></td></tr>`
                 ).join('')}</tbody></table>`;
