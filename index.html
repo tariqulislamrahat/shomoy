@@ -196,7 +196,7 @@
         }
         .logo-container {
             width: 100%;
-            max-width: 180px;
+            max-width: 300px;
             margin: 0 auto 25px;
             position: relative;
         }
@@ -910,6 +910,9 @@
         const DAY_START = '08:00';
         const DAY_END = '20:00';
         let currentUser = null, volunteers = [], selectedDay = null, available = [];
+        let cacheTimestamp = null;
+        let isFromCache = false;
+        let cacheUpdateInterval = null;
       
         function timeToMin(t) { const [h, m] = t.split(':').map(Number); return h * 60 + (m || 0); }
         function minToTime(min) { const h = Math.floor(min / 60).toString().padStart(2, '0'); const m = (min % 60).toString().padStart(2, '0'); return `${h}:${m}`; }
@@ -969,8 +972,10 @@
                 if (cached) {
                     const {timestamp, data} = JSON.parse(cached);
                     volunteers = data;
+                    cacheTimestamp = timestamp;
+                    isFromCache = true;
                     document.getElementById('dataStatus').style.display = 'none';
-                    updateCacheIndicator(timestamp, false);
+                    updateCacheIndicator(cacheTimestamp, false);
                     renderResults();
                     return;
                 }
@@ -982,8 +987,10 @@
                 volunteers = parseCSV(csv);
                 const timestamp = Date.now();
                 localStorage.setItem('volunteersCache', JSON.stringify({timestamp, data: volunteers}));
+                cacheTimestamp = timestamp;
+                isFromCache = false;
                 document.getElementById('dataStatus').style.display = 'none';
-                updateCacheIndicator(timestamp, true);
+                updateCacheIndicator(cacheTimestamp, true);
                 renderResults();
             } catch (err) {
                 document.getElementById('dataStatus').innerHTML = `<div style="color:#ff3b30;text-align:center;padding:20px;"><i class="fas fa-exclamation-triangle" style="font-size:2rem;"></i><p>Failed to load data.<br>Check internet or sheet publish settings.</p></div>`;
@@ -1089,10 +1096,13 @@
                 return;
             }
           
+            const now = new Date();
+            const exportDate = now.toLocaleDateString('default', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+          
             let printHeader = `<div class="print-header" style="display:none;">
                 <h1>AIUB Social Welfare Club - SHOMOY</h1>
                 <p>Exported By: ${esc(currentUser.displayName)}</p>
-                <p>Export Date: ${new Date().toLocaleDateString()}</p>
+                <p>Export Date: ${exportDate}</p>
                 <p>Export Time: ${new Date().toLocaleTimeString()}</p>`;
           
             if (selectedDay && start && end) {
@@ -1142,6 +1152,11 @@
             selectedDay = days[dayIndex === 0 ? 0 : dayIndex - 1];
             renderDayTabs();
             loadData();
+          
+            if (cacheUpdateInterval) clearInterval(cacheUpdateInterval);
+            if (isFromCache) {
+                cacheUpdateInterval = setInterval(() => updateCacheIndicator(cacheTimestamp, false), 60000);
+            }
           
             document.getElementById('startTimeInput').addEventListener('change', update);
             document.getElementById('endTimeInput').addEventListener('change', update);
