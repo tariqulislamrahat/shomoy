@@ -76,6 +76,11 @@
         .loading-spinner { width: 40px; height: 40px; border: 4px solid #333333; border-top: 4px solid #4a90e2; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; display: inline-block; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         footer { text-align: center; padding: 20px; color: #888888; font-size: 0.85rem; border-top: 1px solid #333333; margin-top: 30px; }
+        .print-selection { display: none; }
+        .controls .input-group { position: relative; }
+        .controls .input-group input { min-width: 200px; padding: 10px 15px 10px 40px; border: 1px solid #444444; border-radius: 8px; background: #333333; color: #ffffff; font-size: 0.9rem; transition: all 0.3s ease; }
+        .controls .input-group input:focus, .controls .input-group input:hover { border-color: #4a90e2; box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1); }
+        .controls .input-group i { left: 12px; color: #bbbbbb; }
         /* Print Styles */
         @media print {
             body * { visibility: hidden; color: #000 !important; background: #fff !important; }
@@ -83,9 +88,12 @@
             .main-content, .card:nth-child(2), .volunteers-list, .volunteers-list * { visibility: visible; }
             .main-content { position: absolute; left: 0; top: 0; width: 100%; }
             .card:nth-child(2) { box-shadow: none; padding: 0; }
-            .compact-table, .volunteer-item { border: 1px solid #000; }
+            .compact-table, .compact-table th, .compact-table td { border: 1px solid #000 !important; }
+            .volunteer-item { border: 1px solid #000; margin-bottom: 0; }
             .volunteer-phone { background: none; color: #000; padding: 0; }
             h1, .card-title { color: #000 !important; page-break-after: avoid; }
+            .print-selection { display: block !important; font-weight: bold; margin-bottom: 15px; font-size: 1.2rem; }
+            .volunteers-list { max-height: none !important; overflow: visible !important; height: auto !important; }
             @page { margin: 1cm; }
         }
         @media (min-width: 1024px) { .main-content { grid-template-columns: 1fr 2fr; } }
@@ -95,7 +103,7 @@
     <div id="loginContainer" class="login-container">
         <div class="login-card">
             <div class="login-logo"><i class="fas fa-users-cog"></i></div>
-            <h3>AIUB Social Welfare Club - SHOMOY</h3>
+            <h4>AIUB Social Welfare Club - SHOMOY</h4>
             <p class="login-subtitle">Sign in to access the volunteer dashboard</p>
             <form id="loginForm">
                 <div class="input-group"><i class="fas fa-user"></i><input id="username" type="text" placeholder="Username" required></div>
@@ -106,7 +114,6 @@
             <p class="login-footer"><i class="fas fa-shield-alt"></i> Secure login required</p>
         </div>
     </div>
-
     <div class="dashboard-container" id="dashboardContainer">
         <div class="container">
             <header>
@@ -121,7 +128,6 @@
                             <div class="user-avatar" id="userAvatar">U</div>
                             <div class="user-details">
                                 <div class="user-name" id="userName">User</div>
-                                <div class="user-role">Administrator</div>
                             </div>
                         </div>
                         <button class="btn btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
@@ -131,10 +137,9 @@
                     <button class="btn btn-primary" id="refreshBtn"><i class="fas fa-sync"></i> Refresh Data</button>
                     <button class="btn btn-secondary" id="clearBtn"><i class="fas fa-times"></i> Clear Selection</button>
                     <button class="btn btn-print" id="printBtn"><i class="fas fa-print"></i> Print List</button>
-                    <input id="searchInput" type="search" placeholder="Search by name or ID...">
+                    <div class="input-group"><i class="fas fa-search"></i><input id="searchInput" type="search" placeholder="Search by name or ID..."></div>
                 </div>
             </header>
-
             <div class="main-content">
                 <div class="card">
                     <h2 class="card-title"><i class="far fa-calendar"></i> Select Day & Time</h2>
@@ -146,7 +151,6 @@
                     </div>
                     <div id="selectionInfo"><strong>Selected:</strong> <span id="selectionText"></span></div>
                 </div>
-
                 <div class="card">
                     <h2 class="card-title"><i class="fas fa-users"></i> Available Volunteers</h2>
                     <div id="dataStatus">
@@ -155,14 +159,12 @@
                     <div class="volunteers-list" id="volunteersList"></div>
                 </div>
             </div>
-
             <footer>
                 <p>Feedback or Complaints? <a href="https://forms.gle/5C8rLt4VvbVZM4SNA" target="_blank">Submit here</a></p>
                 <p style="margin-top:8px; opacity:0.7;">© 2025 AIUB Social Welfare Club - SHOMOY</p>
             </footer>
         </div>
     </div>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script>
         const USERS = [
@@ -170,18 +172,14 @@
             {username: "ragib", password: "78b5d26ad5c8e3349f5d61dc46b30d23a85524f0da0ea169d0537d026ea1d222", displayName: "Ragib Hasan"},
             {username: "jihad", password: "78b5d26ad5c8e3349f5d61dc46b30d23a85524f0da0ea169d0537d026ea1d222", displayName: "Jihad"}
         ];
-
         const DATA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS6o4TCiRGrKLtyLVa_h2Sn8nzi3qIJbukGGpd-MH2eW1vMA63CCJIBPA_7DmOBhzNPfToguLSTZO3J/pub?output=csv';
         const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"];
-
         let currentUser = null, volunteers = [], selectedDay = null, available = [];
-
         function timeToMin(t) { const [h, m] = t.split(':').map(Number); return h * 60 + (m || 0); }
         function formatToAMPM(t) { const [h, m] = t.split(':').map(Number); const period = h >= 12 ? 'PM' : 'AM'; const hh = h % 12 || 12; return `${hh}:${m.toString().padStart(2,'0')} ${period}`; }
         function overlap(s1, e1, s2, e2) { const [a,b,c,d] = [timeToMin(s1), timeToMin(e1), timeToMin(s2), timeToMin(e2)]; return !(b <= c || a >= d); }
         function esc(s) { return (s || '').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
         function fmtPhone(p) { if (!p || p === 'N/A') return 'N/A'; let n = p.replace(/\D/g,''); if (n.length === 10) n = '0' + n; if (n.length === 11 && n[0]==='0') return n.slice(0,4)+'-'+n.slice(4,8)+'-'+n.slice(8); return p; }
-
         // Login
         document.getElementById('loginForm').addEventListener('submit', e => {
             e.preventDefault();
@@ -200,9 +198,7 @@
                 document.getElementById('loginError').style.display = 'block';
             }
         });
-
         document.getElementById('logoutBtn').addEventListener('click', () => location.reload());
-
         // Data loading - fixed with cache busting
         async function loadData() {
             try {
@@ -216,7 +212,6 @@
                 document.getElementById('dataStatus').innerHTML = `<div style="color:#ff3b30;text-align:center;padding:20px;"><i class="fas fa-exclamation-triangle" style="font-size:2rem;"></i><p>Failed to load data.<br>Check internet or sheet publish settings.</p></div>`;
             }
         }
-
         function parseCSV(csv) {
             const lines = csv.split(/\r?\n/).filter(l => l.trim());
             if (lines.length < 2) return [];
@@ -238,31 +233,27 @@
                     phone: row['Phone Number'] || row['Phone'] || '',
                     schedule: {
                         Sunday: parseSlots(row['Sunday'] || row['Sunday '] || ''),
-                        Monday: parseSlots(row['Monday'] || row['Monday  '] || ''),
-                        Tuesday: parseSlots(row['Tuesday'] || row['Tuesday  '] || ''),
-                        Wednesday: parseSlots(row['Wednesday'] || row['Wednesday  '] || ''),
+                        Monday: parseSlots(row['Monday'] || row['Monday '] || ''),
+                        Tuesday: parseSlots(row['Tuesday'] || row['Tuesday '] || ''),
+                        Wednesday: parseSlots(row['Wednesday'] || row['Wednesday '] || ''),
                         Thursday: parseSlots(row['Thursday'] || '')
                     }
                 };
             }).filter(v => v.name && v.studentId);
         }
-
         function parseSlots(str) {
             if (!str || str.toLowerCase().includes('no class')) return ['No classes'];
             return str.split(',').map(s => s.trim()).filter(s => s);
         }
-
         function renderDayTabs() {
             const today = new Date();
             const dayIndex = today.getDay();
             const todayName = days[dayIndex === 0 ? 0 : dayIndex - 1];
-            document.getElementById('dayContainer').innerHTML = days.map(day => 
+            document.getElementById('dayContainer').innerHTML = days.map(day =>
                 `<div class="day-tab ${selectedDay === day ? 'selected' : ''} ${day === todayName ? 'today' : ''}" onclick="selectDay('${day}')">${day.substr(0,3)}</div>`
             ).join('');
         }
-
         function selectDay(day) { selectedDay = day; renderDayTabs(); update(); }
-
         function update() {
             const start = document.getElementById('startTimeInput').value;
             const end = document.getElementById('endTimeInput').value;
@@ -291,24 +282,24 @@
             }
             renderResults();
         }
-
         function renderResults() {
             const query = document.getElementById('searchInput').value.toLowerCase();
             const list = (selectedDay && document.getElementById('startTimeInput').value && document.getElementById('endTimeInput').value) ? available : volunteers;
             const filtered = list.filter(v => v.name.toLowerCase().includes(query) || v.studentId.includes(query));
             const container = document.getElementById('volunteersList');
-
+            const start = document.getElementById('startTimeInput').value;
+            const end = document.getElementById('endTimeInput').value;
             if (filtered.length === 0) {
                 container.innerHTML = `<div class="empty-state"><i class="fas fa-user-slash"></i><p>No volunteers found</p></div>`;
                 return;
             }
-
-            if (selectedDay && document.getElementById('startTimeInput').value && document.getElementById('endTimeInput').value) {
-                container.innerHTML = `<table class="compact-table"><thead><tr><th>Name</th><th>ID</th><th>Phone</th></tr></thead><tbody>${filtered.map(v => 
+            if (selectedDay && start && end) {
+                container.innerHTML = `<div class="print-selection">Available Volunteers for ${selectedDay}, ${formatToAMPM(start)} – ${formatToAMPM(end)}</div>
+                <table class="compact-table"><thead><tr><th>Name</th><th>ID</th><th>Phone</th></tr></thead><tbody>${filtered.map(v =>
                     `<tr><td>${esc(v.name)}</td><td>${esc(v.studentId)}</td><td><a href="tel:${v.phone.replace(/\D/g,'')}" class="volunteer-phone">${fmtPhone(v.phone)}</a></td></tr>`
                 ).join('')}</tbody></table>`;
             } else {
-                container.innerHTML = filtered.map(v => 
+                container.innerHTML = `<div class="print-selection">All Registered Volunteers</div>` + filtered.map(v =>
                     `<div class="volunteer-item">
                         <div class="volunteer-info"><h4>${esc(v.name)}</h4><p>${esc(v.department)} • ${esc(v.studentId)}</p></div>
                         <a href="tel:${v.phone.replace(/\D/g,'')}" class="volunteer-phone">${fmtPhone(v.phone)}</a>
@@ -316,14 +307,12 @@
                 ).join('');
             }
         }
-
         function init() {
             const today = new Date();
             const dayIndex = today.getDay();
             selectedDay = days[dayIndex === 0 ? 0 : dayIndex - 1];
             renderDayTabs();
             loadData();
-
             document.getElementById('startTimeInput').addEventListener('change', update);
             document.getElementById('endTimeInput').addEventListener('change', update);
             document.getElementById('searchInput').addEventListener('input', renderResults);
@@ -343,7 +332,6 @@
             });
             document.getElementById('printBtn').addEventListener('click', () => window.print());
         }
-
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.addEventListener('keydown', e => { if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && [73,67,74].includes(e.keyCode)) || (e.ctrlKey && e.key === 'u')) e.preventDefault(); });
     </script>
